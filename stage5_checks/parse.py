@@ -2,7 +2,8 @@ import os
 import sys
 golden_path = sys.argv[1]
 output_path = sys.argv[2]
-
+test_case_to_be_checked = sys.argv[3]
+assert test_case_to_be_checked == '5' or test_case_to_be_checked == '79', "Invalid test case number"
 
 def parse_file(file_path):
     with open(file_path, 'r') as f:
@@ -118,9 +119,10 @@ output_cycle_info = parse_file(output_path)
 # print(output_cycle_info)
 
 print("Number of cycles taken:", len(output_cycle_info))
-if unpipelined_cycle_info == output_cycle_info:
-    print("1")
-    exit()
+if test_case_to_be_checked == '5':
+    if unpipelined_cycle_info == output_cycle_info:
+        print("1")
+        exit()
 if not check_register_order(unpipelined_cycle_info, output_cycle_info):
     print("0")
     print("Register order does not match")
