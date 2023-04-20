@@ -1,9 +1,5 @@
 import os
 import sys
-golden_path = sys.argv[1]
-output_path = sys.argv[2]
-test_case_to_be_checked = sys.argv[3]
-assert test_case_to_be_checked == '5' or test_case_to_be_checked == '79', "Invalid test case number"
 
 def parse_file(file_path):
     with open(file_path, 'r') as f:
@@ -84,10 +80,6 @@ def check_relative_order(golden_cycle_info, output_cycle_info):
             corresponding_memory_order.append([golden_cycle_info[i][1]])
         else:
             corresponding_memory_order[-1].append(golden_cycle_info[i][1])
-    # for i in range(len(unique_golden_order)):
-    #     print(unique_golden_order[i])
-    #     if i < len(corresponding_memory_order):
-    #         print(corresponding_memory_order[i])
     ouput_order = [x[0] for x in output_cycle_info]
     map_gold_to_out = {}
     curr_g = 0
@@ -113,29 +105,54 @@ def check_relative_order(golden_cycle_info, output_cycle_info):
             if not flag:
                 return False
     return True
-unpipelined_cycle_info = parse_file(golden_path)
-# print(unpipelined_cycle_info)
-output_cycle_info = parse_file(output_path)
-# print(output_cycle_info)
 
-print("Number of cycles taken:", len(output_cycle_info))
-if test_case_to_be_checked == '5':
-    if unpipelined_cycle_info == output_cycle_info:
-        print("1")
-        exit()
-if not check_register_order(unpipelined_cycle_info, output_cycle_info):
-    print("0")
-    print("Register order does not match")
-    exit()
-if not check_memory_order(unpipelined_cycle_info, output_cycle_info):
-    print("0")
-    print("Memory order does not match")
-    exit()
-if not check_relative_order(unpipelined_cycle_info, output_cycle_info):
-    print("0")
-    print("Relative memory-register order does not match")
-    exit()
+def check_correctness(unpipelined_cycle_info, output_cycle_info):
+    if not check_register_order(unpipelined_cycle_info, output_cycle_info):
+        return False
+    if not check_memory_order(unpipelined_cycle_info, output_cycle_info):
+        return False
+    if not check_relative_order(unpipelined_cycle_info, output_cycle_info):
+        return False
+    return True
 
-print("0.2")
-print("Relative execution order is correct")
+def check_output(unpipelined_cycle_info, output_path, test_case_to_be_checked):
+    
+    output_cycle_info = parse_file(output_path)
 
+    cycles = len(output_cycle_info)
+    if test_case_to_be_checked == '5':
+        if unpipelined_cycle_info == output_cycle_info:
+            cycles = 1
+        elif check_correctness(unpipelined_cycle_info, output_cycle_info):
+            cycles = 0
+        else:
+            cycles = -1
+        return cycles
+
+    if check_correctness(unpipelined_cycle_info, output_cycle_info):
+        return cycles
+    else:
+        return -1
+
+if __name__ == "__main__":
+    if len(sys.argv) != 4:
+        print("Usage: python3 check.py <golden_path> <output_dir> <output_file>")
+        exit(1)
+    golden_path = sys.argv[1]
+    output_dir = sys.argv[2]
+    output_file = sys.argv[3]
+
+    unpipelined_cycle_infos = dict()
+    unpipelined_cycle_infos[('5', 'nobypass')] = parse_file(os.path.join(golden_path, '5_nobypass'))
+    unpipelined_cycle_infos[('5', 'bypass')] = parse_file(os.path.join(golden_path, '5_bypass'))
+    unpipelined_cycle_infos[('79', 'nobypass')] = unpipelined_cycle_infos[('79', 'bypass')] = parse_file(os.path.join(golden_path, '79'))
+
+    f = open(output_file, 'w+')
+
+    for student in os.listdir(output_dir):
+        f.write(student + ',')
+        for stage in ('5', '79'):
+            for case in ('nobypass', 'bypass'):
+                f.write(str(check_output(unpipelined_cycle_infos[(stage, case)], os.path.join(output_dir, student, stage + '_' + case), stage)) + ',')
+        f.seek(f.tell() - 1)
+        f.write('\n')

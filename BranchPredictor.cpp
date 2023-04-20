@@ -16,8 +16,8 @@ std::vector<std::pair<uint32_t, bool>> readTrace(std::ifstream& traceFile) {
 }
 
 int main(int argc, char** argv) {
-    if (argc != 5) {
-        std::cerr << "Usage: ./BranchPredictor <student id> <trace file> <output directory> <num>" << std::endl;
+    if (argc != 4) {
+        std::cerr << "Usage: ./BranchPredictor <student id> <trace file> <output directory>" << std::endl;
         return 0;
     }
 
@@ -26,16 +26,15 @@ int main(int argc, char** argv) {
     std::ifstream traceFile(argv[2]);
     std::vector<std::pair<uint32_t, bool>> trace = readTrace(traceFile);
 
-    boost::filesystem::path outputDirectory = boost::filesystem::path(argv[3]) / boost::filesystem::path(argv[4]);
+    boost::filesystem::path outputDirectory = boost::filesystem::path(argv[3]) / boost::filesystem::path(argv[2]).filename();
     if (!boost::filesystem::exists(outputDirectory))
         boost::filesystem::create_directories(outputDirectory);
 
     for (int caseNum = 1; caseNum <= 3; caseNum++) {
         for (int value = 0; value <= 3; value++) {
-
             if (!boost::filesystem::exists(outputDirectory / studentId))
                 boost::filesystem::create_directory(outputDirectory / studentId);
-            std::ofstream outputFile((outputDirectory / studentId / (std::to_string(caseNum) + "_" + std::to_string(value) + ".txt")).string());
+            std::ofstream outputFile((outputDirectory / studentId / (std::to_string(caseNum) + "_" + std::to_string(value))).string());
 
             BranchPredictor* predictor;
             switch (caseNum) {

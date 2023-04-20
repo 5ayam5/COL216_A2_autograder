@@ -87,10 +87,10 @@ int main(int argc, char** argv) {
         outputFile << student.filename().string() << ',';
         for (int caseNum = 1; caseNum <= 2; caseNum++)
             for (int value = 0; value <= 3; value++)
-                outputFile << check(gold_predictions[caseNum - 1][value], (student / (std::to_string(caseNum) + "_" + std::to_string(value) + ".txt")).string()) << ',';
+                outputFile << check(gold_predictions[caseNum - 1][value], (student / (std::to_string(caseNum) + "_" + std::to_string(value))).string()) << ',';
 
         for (int value = 0; value <= 3; value++) {
-            auto predictions = get_predictions((student / ("3_" + std::to_string(value) + ".txt")).string());
+            auto predictions = get_predictions((student / ("3_" + std::to_string(value))).string());
             int count = 0;
             if (predictions.size() == trace.size())
                 for (int i = 0; i < predictions.size(); i++)
