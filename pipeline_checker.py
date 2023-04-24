@@ -20,8 +20,6 @@ def parse_file(file_path):
         if len_memory_line > 0:
             assert len(memory_line.split(' ')) == 2*len_memory_line+1, f"Memory line at {i} does not have correct number of memory locations"
         cycle_info.append([register_line, memory_line])
-    
-    # if same alloted twice then ignore
 
     changes = {}
 
@@ -116,43 +114,47 @@ def check_correctness(unpipelined_cycle_info, output_cycle_info):
     return True
 
 def check_output(unpipelined_cycle_info, output_path, test_case_to_be_checked):
-    
-    output_cycle_info = parse_file(output_path)
+    try:
+        output_cycle_info = parse_file(output_path)
 
-    cycles = len(output_cycle_info)
-    if test_case_to_be_checked == '5':
-        if unpipelined_cycle_info == output_cycle_info:
-            cycles = 1
-        elif check_correctness(unpipelined_cycle_info, output_cycle_info):
-            cycles = 0
+        cycles = len(output_cycle_info)
+        if test_case_to_be_checked == '5':
+            if unpipelined_cycle_info == output_cycle_info:
+                cycles = 1
+            elif check_correctness(unpipelined_cycle_info, output_cycle_info):
+                cycles = 0
+            else:
+                cycles = -1
+            return cycles
+
+        if check_correctness(unpipelined_cycle_info, output_cycle_info):
+            return cycles
         else:
-            cycles = -1
-        return cycles
-
-    if check_correctness(unpipelined_cycle_info, output_cycle_info):
-        return cycles
-    else:
-        return -1
+            return -1
+    except Exception:
+        return -2
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print("Usage: python3 check.py <golden_path> <output_dir> <output_file>")
+    if len(sys.argv) != 3:
+        print("Usage: python3 check.py <golden_path> <output_dir>")
         exit(1)
     golden_path = sys.argv[1]
     output_dir = sys.argv[2]
-    output_file = sys.argv[3]
 
-    unpipelined_cycle_infos = dict()
-    unpipelined_cycle_infos[('5', 'nobypass')] = parse_file(os.path.join(golden_path, '5_nobypass'))
-    unpipelined_cycle_infos[('5', 'bypass')] = parse_file(os.path.join(golden_path, '5_bypass'))
-    unpipelined_cycle_infos[('79', 'nobypass')] = unpipelined_cycle_infos[('79', 'bypass')] = parse_file(os.path.join(golden_path, '79'))
 
-    f = open(output_file, 'w+')
+    for testcase in os.listdir(golden_path):
+        f = open(os.path.join(output_dir, testcase + ".csv"), 'w+')
+        unpipelined_cycle_infos = dict()
+        unpipelined_cycle_infos[('5', 'nobypass')] = parse_file(os.path.join(golden_path, testcase, '5_nobypass'))
+        unpipelined_cycle_infos[('5', 'bypass')] = parse_file(os.path.join(golden_path, testcase, '5_bypass'))
+        unpipelined_cycle_infos[('79', 'nobypass')] = unpipelined_cycle_infos[('79', 'bypass')] = parse_file(os.path.join(golden_path, testcase, '79'))
 
-    for student in os.listdir(output_dir):
-        f.write(student + ',')
-        for stage in ('5', '79'):
-            for case in ('nobypass', 'bypass'):
-                f.write(str(check_output(unpipelined_cycle_infos[(stage, case)], os.path.join(output_dir, student, stage + '_' + case), stage)) + ',')
-        f.seek(f.tell() - 1)
-        f.write('\n')
+        for student in os.listdir(os.path.join(output_dir, "pipeline")):
+            f.write(student[:-3] + ',')
+            for stage in ('5', '79'):
+                for case in ('nobypass', 'bypass'):
+                    f.write(str(check_output(unpipelined_cycle_infos[(stage, case)], os.path.join(output_dir, "pipeline", student, testcase, stage + '_' + case), stage)) + ',')
+            f.seek(f.tell() - 1)
+            f.write('\n')
+
+        f.close()

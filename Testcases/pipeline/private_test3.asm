@@ -21,4 +21,4 @@ sub $s3, $s1, $s2
 add $t1, $t7, $s3
 add $t2, $t1, $7
 addi $t3, $0, 1
-add $t4, $t2, $t3
+add $t4, $t2, $t3

@@ -7,12 +7,12 @@ gold=$1
 pipeline_outputs=$2
 output=$3
 
-if [ ! -d $output ]; then
-    mkdir $output
+if [ ! -d "$output" ]; then
+    mkdir "$output"
 fi
 
 for testcase in $gold/*; do
     testcase_name=$(basename $testcase)
     echo "Checking $testcase_name"
-    python3 pipeline_checker.py $testcase $pipeline_outputs/$testcase_name $output/$testcase_name.csv
+    python3 pipeline_checker.py "$testcase" "$pipeline_outputs/$testcase_name" "$output/$testcase_name.csv"
 done

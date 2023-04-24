@@ -51,6 +51,8 @@ std::vector<std::vector<std::vector<bool>>> get_all_predictions(std::vector<std:
 
 bool check(std::vector<bool> gold, std::string fileName) {
     std::ifstream file(fileName);
+    if (!file.fail())
+        return false;
     std::string line;
     int i = 0;
 

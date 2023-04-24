@@ -9,12 +9,12 @@ predictions=$1
 testcases=$2
 output=$3
 
-if [ ! -d $output ]; then
-    mkdir $output
+if [ ! -d "$output" ]; then
+    mkdir "$output"
 fi
 
-for testcase in $predictions/*; do
+for testcase in "$predictions/*"; do
     testcase_name=$(basename $testcase)
     echo "Checking $testcase_name"
-    ./BranchPredictorChecker $testcase $testcases/$testcase_name $output/$testcase_name.csv
+    ./BranchPredictorChecker "$testcase" "$testcases/$testcase_name" "$output/$testcase_name.csv"
 done
