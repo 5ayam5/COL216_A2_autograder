@@ -36,13 +36,15 @@ if [ ! -d "$pipeline_gold" ]; then
 fi
 
 echo "Unzipping submissions"
-echo > "$outputs/missing"
+echo -n > "$outputs/missing_invalid_zip"
 for student in "$submission_dir"/*; do
-    if compgen -G "$student/*_*_A2.zip" > /dev/null; then
-        unzip -o "$student/*_*_A2.zip" -d "$student" > /dev/null
-    else
-        echo "  Missing zip file for $student"
-        echo "$student" >> "$outputs/missing"
+    student_name=$(basename "$(ls "$student"/*_*_A2.zip)")
+    if [ ${#student_name} -lt 8 ]; then
+        echo "$student" >> "$outputs/missing_invalid_zip"
+    fi
+    unzip -o "$student/$student_name" -d "$student" > /dev/null
+    if [ $? -ne 0 ]; then
+        echo "$student" >> "$outputs/missing_invalid_zip"
     fi
 done
 
@@ -53,21 +55,23 @@ fi
 echo -n > "$outputs/pipeline_compile_error"
 
 for student in "$submission_dir"/*; do
-    student_name=$(basename "$(ls "$student"/*_*_A2.zip)")
-    if [ ${#student_name} -ge 4 ]; then
-        student_name=${student_name::-4}
-    else
+    student_dir=$(basename "$(ls "$student"/*_*_A2.zip)")
+    if [ ${#student_dir} -lt 8 ]; then
         continue
     fi
+    student_dir=${student_dir::-4}
+    if [ ! -d "$student/$student_dir" ]; then
+        continue
+    fi
+
+    student_name=${student_dir::-3}
     if [ ! -d "$outputs/pipeline/$student_name" ]; then
         mkdir "$outputs/pipeline/$student_name"
     fi
-
-    echo "  Running $student_name"
     log_file="$wd/$outputs/pipeline/$student_name/log"
     echo -n > "$log_file"
 
-    (cd "$student/$student_name" > /dev/null 2>&1 && make -s compile >> "$log_file" 2>&1)
+    (cd "$student/$student_dir" > /dev/null 2>&1 && make -s compile >> "$log_file" 2>&1)
     success=$?
     if [ $success != 0 ]; then
         echo "$student_name" >> "$outputs/pipeline_compile_error"
@@ -81,18 +85,21 @@ for student in "$submission_dir"/*; do
 
         if [ $success -eq 0 ]; then
             echo "Running $testcase_name" >> "$log_file"
-            cp "$testcase" "$student/$student_name/input.asm"
+            cp "$testcase" "$student/$student_dir/input.asm"
             
-            pushd "$student/$student_name" > /dev/null 2>&1
-            timeout 60 make -s run_5stage > "$wd/$outputs/pipeline/$student_name/$testcase_name/5_nobypass" 2> "$log_file"
-            timeout 60 make -s run_5stage_bypass > "$wd/$outputs/pipeline/$student_name/$testcase_name/5_bypass" 2> "$log_file"
-            timeout 60 make -s run_79stage > "$wd/$outputs/pipeline/$student_name/$testcase_name/79_nobypass" 2> "$log_file"
-            timeout 60 make -s run_79stage_bypass > "$wd/$outputs/pipeline/$student_name/$testcase_name/79_bypass" 2> "$log_file"
+            pushd "$student/$student_dir" > /dev/null 2>&1
+            echo "5_nobypass" >> "$log_file"
+            timeout 60 make -s run_5stage > "$wd/$outputs/pipeline/$student_name/$testcase_name/5_nobypass" 2>> "$log_file"
+            echo "5_bypass" >> "$log_file"
+            timeout 60 make -s run_5stage_bypass > "$wd/$outputs/pipeline/$student_name/$testcase_name/5_bypass" 2>> "$log_file"
+            echo "79_nobypass" >> "$log_file"
+            timeout 60 make -s run_79stage > "$wd/$outputs/pipeline/$student_name/$testcase_name/79_nobypass" 2>> "$log_file"
+            echo "79_bypass" >> "$log_file"
+            timeout 60 make -s run_79stage_bypass > "$wd/$outputs/pipeline/$student_name/$testcase_name/79_bypass" 2>> "$log_file"
             popd > /dev/null 2>&1
         fi
     done
 done
-exit 0
 
 echo "Running pipeline checker"
 make -s -C "$unpipelined_wd" > /dev/null 2>&1
@@ -103,27 +110,63 @@ for testcase in "$testcases"/pipeline/*; do
     ./sample  "$wd/$testcase" > "$wd/$pipeline_gold/$testcase_name/79"
     popd > /dev/null 2>&1
 done
-exit 0
 
-./pipeline_checker.sh "$pipeline_gold" "$outputs/pipeline" "$outputs/pipeline_checker"
-exit 0
+python3 pipeline_checker.py "$pipeline_gold" "$outputs"
 
 echo "Running branch predictor code"
-for testcase in "$testcases/branch_predictor/*"; do
-    testcase_name=$(basename $testcase)
-    echo "  Running $testcase_name"
+cp BranchPredictor.cpp "$workspace"/.
+cp Makefile "$workspace"/.
+if [ ! -d "$outputs/branch_predictor" ]; then
+    mkdir "$outputs/branch_predictor"
+fi
+echo -n > "$outputs/branch_predictor_compile_error"
 
-    for student in "$submission_dir/*"; do
-        student_name=$(basename "$(ls "$student"/*_*_A2.zip)")
-        student_name=${student_name::-4}
-        if [ ! -f "$student/$student_name/BranchPredictor.hpp" ]; then
-            continue
+for student in "$submission_dir"/*; do
+    student_dir=$(basename "$(ls "$student"/*_*_A2.zip)")
+    if [ ${#student_dir} -lt 8 ]; then
+        continue
+    fi
+    student_dir=${student_dir::-4}
+    if [ ! -d "$student/$student_dir" ]; then
+        continue
+    fi
+
+    student_name=${student_dir::-3}
+    if [ ! -d "$outputs/branch_predictor/$student_name" ]; then
+        mkdir "$outputs/branch_predictor/$student_name"
+    fi
+    log_file="$wd/$outputs/branch_predictor/$student_name/log"
+    echo -n > "$log_file"
+    
+    if [ ! -f "$student/$student_dir/BranchPredictor.hpp" ]; then
+        echo "$student_name" >> "$outputs/branch_predictor_compile_error"
+        continue
+    fi
+
+    cp "$student/$student_dir/BranchPredictor.hpp" "$workspace/BranchPredictor.hpp"
+    make -s -C "$workspace" BranchPredictor >> "$log_file" 2>&1
+    if [ $? -ne 0 ]; then
+        echo "${student_name::-3}" >> "$outputs/branch_predictor_compile_error"
+        continue
+    fi
+
+    for testcase in "$testcases"/branch_predictor/*; do
+        testcase_name=$(basename "$testcase")
+        if [ ! -d "$outputs/branch_predictor/$student_name/$testcase_name" ]; then
+            mkdir "$outputs/branch_predictor/$student_name/$testcase_name"
         fi
-        cp "$student/BranchPredictor.hpp" "$workspace/BranchPredictor.hpp"
-        make -s -C "$workspace" BranchPredictor
-        ./"$workspace/BranchPredictor" "$student_name" "$testcase" "$outputs/branch_predictor/$testcase_name"
+
+        echo "Running $testcase_name" >> "$log_file"
+        for caseNum in {1..3}; do
+            echo "Case $caseNum" >> "$log_file"
+            for value in {0..3}; do
+                echo "Value $value" >> "$log_file"
+                timeout 60 ./"$workspace/BranchPredictor" "$testcase" $caseNum $value > "$outputs/branch_predictor/$student_name/$testcase_name/${caseNum}_$value" 2>> "$log_file"
+            done
+        done
     done
 done
 
 echo "Running branch predictor checker"
-./branch_predictor_checker.sh "$outputs/branch_predictor" "$testcases/branch_predictor" "$outputs/branch_predictor_checker"
+make -s BranchPredictorChecker
+./BranchPredictorChecker "$outputs" "$testcases/branch_predictor"

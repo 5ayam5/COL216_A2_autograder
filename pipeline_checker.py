@@ -8,7 +8,7 @@ def parse_file(file_path):
     for line in raw_lines:
         line = line.strip()
         if line == '':
-            break
+            continue
         lines.append(line)
     assert len(lines) % 2 == 0, "Number of lines in output file must be even"
     cycle_info = []
@@ -141,9 +141,11 @@ if __name__ == "__main__":
     golden_path = sys.argv[1]
     output_dir = sys.argv[2]
 
+    if not os.path.exists(os.path.join(output_dir, "pipeline_csvs")):
+        os.makedirs(os.path.join(output_dir, "pipeline_csvs"))
 
     for testcase in os.listdir(golden_path):
-        f = open(os.path.join(output_dir, testcase + ".csv"), 'w+')
+        f = open(os.path.join(output_dir, "pipeline_csvs", testcase + ".csv"), 'w+')
         unpipelined_cycle_infos = dict()
         unpipelined_cycle_infos[('5', 'nobypass')] = parse_file(os.path.join(golden_path, testcase, '5_nobypass'))
         unpipelined_cycle_infos[('5', 'bypass')] = parse_file(os.path.join(golden_path, testcase, '5_bypass'))

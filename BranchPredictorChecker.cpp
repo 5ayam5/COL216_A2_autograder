@@ -9,7 +9,7 @@ std::vector<std::pair<uint32_t, bool>> readTrace(std::ifstream& traceFile) {
     while (std::getline(traceFile, line)) {
         uint32_t pc;
         int taken;
-        sscanf(line.c_str(), "%x %d", &pc, &taken);
+        sscanf(line.c_str(), "%d %d", &pc, &taken);
         trace.push_back(std::make_pair(pc, taken));
     }
     return trace;
@@ -51,7 +51,7 @@ std::vector<std::vector<std::vector<bool>>> get_all_predictions(std::vector<std:
 
 bool check(std::vector<bool> gold, std::string fileName) {
     std::ifstream file(fileName);
-    if (!file.fail())
+    if (file.fail())
         return false;
     std::string line;
     int i = 0;
@@ -67,39 +67,49 @@ bool check(std::vector<bool> gold, std::string fileName) {
 }
 
 int main(int argc, char** argv) {
-    if (argc != 4) {
-        std::cerr << "Usage: ./BranchPredictorChecker <directory> <trace file> <output>" << std::endl;
+    if (argc != 3) {
+        std::cerr << "Usage: ./BranchPredictorChecker <output directory> <trace dir>" << std::endl;
         return 0;
     }
 
-    boost::filesystem::path directory(argv[1]);
-    std::ifstream traceFile(argv[2]);
-    std::ofstream outputFile(argv[3]);
+    boost::filesystem::path outputDirectory(argv[1]);
+    boost::filesystem::path traceDirectory(argv[2]);
 
-    auto trace = readTrace(traceFile);
-    std::vector<std::vector<std::vector<bool>>> gold_predictions = get_all_predictions(trace);
-
-    if (!boost::filesystem::exists(directory)) {
+    if (!boost::filesystem::exists(outputDirectory)) {
         std::cerr << "Directory does not exist" << std::endl;
         return 0;
     }
 
-    for (auto it = boost::filesystem::directory_iterator(directory); it != boost::filesystem::directory_iterator(); it++) {
-        auto student = it->path();
-        outputFile << student.filename().string() << ',';
-        for (int caseNum = 1; caseNum <= 2; caseNum++)
-            for (int value = 0; value <= 3; value++)
-                outputFile << check(gold_predictions[caseNum - 1][value], (student / (std::to_string(caseNum) + "_" + std::to_string(value))).string()) << ',';
+    if (!boost::filesystem::exists(outputDirectory / "branch_predictor_csvs")) {
+        boost::filesystem::create_directory(outputDirectory / "branch_predictor_csvs");
+    }
 
-        for (int value = 0; value <= 3; value++) {
-            auto predictions = get_predictions((student / ("3_" + std::to_string(value))).string());
-            int count = 0;
-            if (predictions.size() == trace.size())
-                for (int i = 0; i < predictions.size(); i++)
-                    if (predictions[i] == trace[i].second)
-                        count++;
-            
-            outputFile << count << ",\n"[value == 3];
+    for (auto it = boost::filesystem::directory_iterator(traceDirectory); it != boost::filesystem::directory_iterator(); it++) {
+        boost::filesystem::path tracePath = it->path();
+        std::ifstream traceFile(tracePath.string());
+        std::vector<std::pair<uint32_t, bool>> trace = readTrace(traceFile);
+        std::vector<std::vector<std::vector<bool>>> gold_predictions = get_all_predictions(trace);
+        std::ofstream outputFile((outputDirectory / "branch_predictor_csvs" / (tracePath.filename().string() + ".csv")).string());
+
+        for (auto it = boost::filesystem::directory_iterator(outputDirectory / "branch_predictor"); it != boost::filesystem::directory_iterator(); it++) {
+            auto student = it->path();
+            outputFile << student.filename().string() << ',';
+            for (int caseNum = 1; caseNum <= 2; caseNum++)
+                for (int value = 0; value <= 3; value++)
+                    outputFile << check(gold_predictions[caseNum - 1][value], (student / tracePath.filename() / (std::to_string(caseNum) + "_" + std::to_string(value))).string()) << ',';
+
+            for (int value = 0; value <= 3; value++) {
+                auto predictions = get_predictions((student / tracePath.filename() / ("3_" + std::to_string(value))).string());
+                int count = 0;
+                if (predictions.size() == trace.size())
+                    for (int i = 0; i < predictions.size(); i++)
+                        if (predictions[i] == trace[i].second)
+                            count++;
+                
+                outputFile << count << ",\n"[value == 3];
+            }
         }
+
+        outputFile.close();
     }
 }
