@@ -49,70 +49,70 @@ for student in "$submission_dir"/*; do
     fi
 done
 
-# echo "Running pipeline code"
-# if [ ! -d "$outputs/pipeline" ]; then
-#     mkdir "$outputs/pipeline"
-# fi
-# echo -n > "$outputs/pipeline_compile_error"
+echo "Running pipeline code"
+if [ ! -d "$outputs/pipeline" ]; then
+    mkdir "$outputs/pipeline"
+fi
+echo -n > "$outputs/pipeline_compile_error"
 
-# for student in "$submission_dir"/*; do
-#     student_dir=$(basename "$(ls "$student"/*_*_A2.zip 2> /dev/null)")
-#     if [ ${#student_dir} -lt 8 ]; then
-#         continue
-#     fi
-#     student_dir=${student_dir::-4}
-#     if [ ! -d "$student/$student_dir" ]; then
-#         continue
-#     fi
+for student in "$submission_dir"/*; do
+    student_dir=$(basename "$(ls "$student"/*_*_A2.zip 2> /dev/null)")
+    if [ ${#student_dir} -lt 8 ]; then
+        continue
+    fi
+    student_dir=${student_dir::-4}
+    if [ ! -d "$student/$student_dir" ]; then
+        continue
+    fi
 
-#     student_name=${student_dir::-3}
-#     if [ ! -d "$outputs/pipeline/$student_name" ]; then
-#         mkdir "$outputs/pipeline/$student_name"
-#     fi
-#     log_file="$wd/$outputs/pipeline/$student_name/log"
-#     echo -n > "$log_file"
+    student_name=${student_dir::-3}
+    if [ ! -d "$outputs/pipeline/$student_name" ]; then
+        mkdir "$outputs/pipeline/$student_name"
+    fi
+    log_file="$wd/$outputs/pipeline/$student_name/log"
+    echo -n > "$log_file"
 
-#     (cd "$student/$student_dir" > /dev/null 2>&1 && make -s compile >> "$log_file" 2>&1)
-#     success=$?
-#     if [ $success != 0 ]; then
-#         echo "$student_name" >> "$outputs/pipeline_compile_error"
-#     fi
+    (cd "$student/$student_dir" > /dev/null 2>&1 && make -s compile >> "$log_file" 2>&1)
+    success=$?
+    if [ $success != 0 ]; then
+        echo "$student_name" >> "$outputs/pipeline_compile_error"
+    fi
 
-#     for testcase in "$testcases"/pipeline/*; do
-#         testcase_name=$(basename "$testcase")
-#         if [ ! -d "$outputs/pipeline/$student_name/$testcase_name" ]; then
-#             mkdir "$outputs/pipeline/$student_name/$testcase_name"
-#         fi
+    for testcase in "$testcases"/pipeline/*; do
+        testcase_name=$(basename "$testcase")
+        if [ ! -d "$outputs/pipeline/$student_name/$testcase_name" ]; then
+            mkdir "$outputs/pipeline/$student_name/$testcase_name"
+        fi
 
-#         if [ $success -eq 0 ]; then
-#             echo "Running $testcase_name" >> "$log_file"
-#             cp "$testcase" "$student/$student_dir/input.asm"
+        if [ $success -eq 0 ]; then
+            echo "Running $testcase_name" >> "$log_file"
+            cp "$testcase" "$student/$student_dir/input.asm"
             
-#             pushd "$student/$student_dir" > /dev/null 2>&1
-#             echo "5_nobypass" >> "$log_file"
-#             timeout 60 make -s run_5stage > "$wd/$outputs/pipeline/$student_name/$testcase_name/5_nobypass" 2>> "$log_file"
-#             echo "5_bypass" >> "$log_file"
-#             timeout 60 make -s run_5stage_bypass > "$wd/$outputs/pipeline/$student_name/$testcase_name/5_bypass" 2>> "$log_file"
-#             echo "79_nobypass" >> "$log_file"
-#             timeout 60 make -s run_79stage > "$wd/$outputs/pipeline/$student_name/$testcase_name/79_nobypass" 2>> "$log_file"
-#             echo "79_bypass" >> "$log_file"
-#             timeout 60 make -s run_79stage_bypass > "$wd/$outputs/pipeline/$student_name/$testcase_name/79_bypass" 2>> "$log_file"
-#             popd > /dev/null 2>&1
-#         fi
-#     done
-# done
+            pushd "$student/$student_dir" > /dev/null 2>&1
+            echo "5_nobypass" >> "$log_file"
+            timeout 60 make -s run_5stage > "$wd/$outputs/pipeline/$student_name/$testcase_name/5_nobypass" 2>> "$log_file"
+            echo "5_bypass" >> "$log_file"
+            timeout 60 make -s run_5stage_bypass > "$wd/$outputs/pipeline/$student_name/$testcase_name/5_bypass" 2>> "$log_file"
+            echo "79_nobypass" >> "$log_file"
+            timeout 60 make -s run_79stage > "$wd/$outputs/pipeline/$student_name/$testcase_name/79_nobypass" 2>> "$log_file"
+            echo "79_bypass" >> "$log_file"
+            timeout 60 make -s run_79stage_bypass > "$wd/$outputs/pipeline/$student_name/$testcase_name/79_bypass" 2>> "$log_file"
+            popd > /dev/null 2>&1
+        fi
+    done
+done
 
-# echo "Running pipeline checker"
-# make -s -C "$unpipelined_wd" > /dev/null 2>&1
-# for testcase in "$testcases"/pipeline/*; do
-#     testcase_name=$(basename "$testcase")
-#     echo $testcase
-#     pushd "$unpipelined_wd" > /dev/null 2>&1
-#     ./sample  "$wd/$testcase" > "$wd/$pipeline_gold/$testcase_name/79"
-#     popd > /dev/null 2>&1
-# done
+echo "Running pipeline checker"
+make -s -C "$unpipelined_wd" > /dev/null 2>&1
+for testcase in "$testcases"/pipeline/*; do
+    testcase_name=$(basename "$testcase")
+    echo $testcase
+    pushd "$unpipelined_wd" > /dev/null 2>&1
+    ./sample  "$wd/$testcase" > "$wd/$pipeline_gold/$testcase_name/79"
+    popd > /dev/null 2>&1
+done
 
-# python3 pipeline_checker.py "$pipeline_gold" "$outputs"
+python3 pipeline_checker.py "$pipeline_gold" "$outputs"
 
 echo "Running branch predictor code"
 cp BranchPredictor.cpp "$workspace"/.
