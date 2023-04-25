@@ -152,7 +152,7 @@ if __name__ == "__main__":
         unpipelined_cycle_infos[('79', 'nobypass')] = unpipelined_cycle_infos[('79', 'bypass')] = parse_file(os.path.join(golden_path, testcase, '79'))
 
         for student in os.listdir(os.path.join(output_dir, "pipeline")):
-            f.write(student[:-3] + ',')
+            f.write(student + ',')
             for stage in ('5', '79'):
                 for case in ('nobypass', 'bypass'):
                     f.write(str(check_output(unpipelined_cycle_infos[(stage, case)], os.path.join(output_dir, "pipeline", student, testcase, stage + '_' + case), stage)) + ',')

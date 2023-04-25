@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
                         if (predictions[i] == trace[i].second)
                             count++;
                 
-                outputFile << count << ",\n"[value == 3];
+                outputFile << (count * 1.0) / trace.size() << ",\n"[value == 3];
             }
         }
 
