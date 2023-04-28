@@ -28,7 +28,8 @@ def parse_file(file_path):
             continue
         memory_loc = cycle_info[i][1].split(' ')[1]
         change_to = cycle_info[i][1].split(' ')[2]
-        if memory_loc in changes and changes[memory_loc] == change_to:
+        if (memory_loc in changes and changes[memory_loc] == change_to) or \
+            (memory_loc not in changes and change_to == '0'):
             cycle_info[i][1] = '0'
         else:
             changes[memory_loc] = change_to
@@ -43,8 +44,8 @@ def match_register(register_line1, register_line2):
     return True
 
 def get_unique_register_order(register_order):
-    out = [register_order[0]]
-    for i in range(1,len(register_order)):
+    out = ['0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0']
+    for i in range(len(register_order)):
         if not match_register(register_order[i], out[-1]):
             out.append(register_order[i])
     return out
