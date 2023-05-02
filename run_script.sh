@@ -39,12 +39,17 @@ echo "Unzipping submissions"
 echo -n > "$outputs/missing_invalid_zip"
 for student in "$submission_dir"/*; do
     student_name=$(basename "$(ls "$student"/*_*_A2.zip 2> /dev/null)")
-    if [ ${#student_name} -lt 8 ]; then
+    if [ ${#student_name} != 30 ]; then
         echo "$student" >> "$outputs/missing_invalid_zip"
         continue
     fi
     unzip -o "$student/$student_name" -d "$student" > /dev/null 2>&1
     if [ $? -ne 0 ]; then
+        echo "$student" >> "$outputs/missing_invalid_zip"
+        continue
+    fi
+    student_dir=${student_name::-4}
+    if [ ! -d "$student/$student_dir" ]; then
         echo "$student" >> "$outputs/missing_invalid_zip"
     fi
 done
@@ -57,7 +62,7 @@ echo -n > "$outputs/pipeline_compile_error"
 
 for student in "$submission_dir"/*; do
     student_dir=$(basename "$(ls "$student"/*_*_A2.zip 2> /dev/null)")
-    if [ ${#student_dir} -lt 8 ]; then
+    if [ ${#student_dir} != 30 ]; then
         continue
     fi
     student_dir=${student_dir::-4}
@@ -124,7 +129,7 @@ echo -n > "$outputs/branch_predictor_compile_error"
 
 for student in "$submission_dir"/*; do
     student_dir=$(basename "$(ls "$student"/*_*_A2.zip 2> /dev/null)")
-    if [ ${#student_dir} -lt 8 ]; then
+    if [ ${#student_dir} != 30 ]; then
         continue
     fi
     student_dir=${student_dir::-4}
