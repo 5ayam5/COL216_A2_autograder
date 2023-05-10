@@ -5,6 +5,11 @@ temp
 submissions/
 testing/
 workspace/
-results/
+results/**/*
 post_processing/
 resubmissions/
+filtered_resubmissions/
+!results/pipeline_csvs
+!results/pipeline_csvs/*
+!results/branch_predictor_csvs
+!results/branch_predictor_csvs/*
