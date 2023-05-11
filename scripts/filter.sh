@@ -8,5 +8,6 @@ output_dir=$3
 
 python3 filter_resubmissions.py $1 |
 while IFS="" read -r p || [ -n "$p" ]; do
+    rm -rf "$output_dir/$p"*
     cp "$resubmissions_dir/$p"* "$output_dir/." -r
 done

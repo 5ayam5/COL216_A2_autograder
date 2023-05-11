@@ -1,3 +1,4 @@
+rm -rf old new
 if [ $# -ne 1 ]; then
     echo "give me a name!"
     exit 1
@@ -48,4 +49,3 @@ else
 fi
 
 colordiff "${arr[0]}" "${arr[1]}" -r
-rm -rf old new

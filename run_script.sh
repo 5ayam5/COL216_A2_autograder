@@ -95,13 +95,13 @@ for student in "$submission_dir"/*; do
             
             pushd "$student/$student_dir" > /dev/null 2>&1
             echo "5_nobypass" >> "$log_file"
-            timeout 60 make -s run_5stage > "$wd/$outputs/pipeline/$student_name/$testcase_name/5_nobypass" 2>> "$log_file"
+            timeout 20 make -s run_5stage > "$wd/$outputs/pipeline/$student_name/$testcase_name/5_nobypass" 2>> "$log_file"
             echo "5_bypass" >> "$log_file"
-            timeout 60 make -s run_5stage_bypass > "$wd/$outputs/pipeline/$student_name/$testcase_name/5_bypass" 2>> "$log_file"
+            timeout 20 make -s run_5stage_bypass > "$wd/$outputs/pipeline/$student_name/$testcase_name/5_bypass" 2>> "$log_file"
             echo "79_nobypass" >> "$log_file"
-            timeout 60 make -s run_79stage > "$wd/$outputs/pipeline/$student_name/$testcase_name/79_nobypass" 2>> "$log_file"
+            timeout 20 make -s run_79stage > "$wd/$outputs/pipeline/$student_name/$testcase_name/79_nobypass" 2>> "$log_file"
             echo "79_bypass" >> "$log_file"
-            timeout 60 make -s run_79stage_bypass > "$wd/$outputs/pipeline/$student_name/$testcase_name/79_bypass" 2>> "$log_file"
+            timeout 20 make -s run_79stage_bypass > "$wd/$outputs/pipeline/$student_name/$testcase_name/79_bypass" 2>> "$log_file"
             popd > /dev/null 2>&1
         fi
     done
@@ -169,7 +169,7 @@ for student in "$submission_dir"/*; do
             echo "Case $caseNum" >> "$log_file"
             for value in {0..3}; do
                 echo "Value $value" >> "$log_file"
-                timeout 60 ./"$workspace/BranchPredictor" "$testcase" $caseNum $value > "$outputs/branch_predictor/$student_name/$testcase_name/${caseNum}_$value" 2>> "$log_file" |:
+                timeout 20 ./"$workspace/BranchPredictor" "$testcase" $caseNum $value > "$outputs/branch_predictor/$student_name/$testcase_name/${caseNum}_$value" 2>> "$log_file" |:
             done
         done
     done
