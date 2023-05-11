@@ -13,3 +13,6 @@ filtered_resubmissions/
 !results/pipeline_csvs/*
 !results/branch_predictor_csvs
 !results/branch_predictor_csvs/*
+!results/missing_invalid_zip
+!results/pipeline_compile_error
+!results/branch_predictor_compile_error
