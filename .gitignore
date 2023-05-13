@@ -6,13 +6,14 @@ submissions/
 testing/
 workspace/
 results/**/*
-post_processing/
 resubmissions/
 filtered_resubmissions/
 !results/pipeline_csvs
-!results/pipeline_csvs/*
+!results/pipeline_csvs/**/*
 !results/branch_predictor_csvs
-!results/branch_predictor_csvs/*
+!results/branch_predictor_csvs/**/*
+!results/post_processing
+!results/post_processing/**/*
 !results/missing_invalid_zip
 !results/pipeline_compile_error
 !results/branch_predictor_compile_error
